@@ -1,6 +1,15 @@
-SELECT upper(name) as Name, round(high,2) as High, timestamp as Timestamp, hour as Hour
-from(
-  select db.*,SUBSTRING(timestamp, 12, 2) as Hour, ROW_NUMBER() OVER(PARTITION BY name, SUBSTRING(timestamp, 12, 2) order by high) as rn
-  FROM "21" db
-  where timestamp between '05/14/2020 09:30:00' AND '05/14/2020 16:00:00'
-)db1 where rn=1 order by name, timestamp
+WITH CTE AS (
+  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour) AS rn FROM (
+    SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp FROM (
+      SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour FROM  "04" 
+      GROUP BY 1, 3
+      ORDER BY 1, 3
+      ) db1, "04" db2
+    WHERE db1.Name = db2.name AND db1.Hour = substring(ts,12,2) AND db1.high = db2.High
+    ORDER BY Name, Hour) db3)
+    SELECT Name, High, Hour, Timestamp,
+    Case
+    when rn=1 then (SELECT count(*) FROM CTE t1 WHERE t1.High = t2.High AND t1.Hour = t2.Hour)
+    else 0
+    end AS Recurrence
+    FROM CTE t2 ORDER BY Name, Hour
