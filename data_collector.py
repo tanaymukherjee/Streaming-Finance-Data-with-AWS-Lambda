@@ -30,7 +30,7 @@ def lambda_handler(event, context):
         
         # Cleaning the data and store them as a dict
         for i in range(len(records)):
-            output = {"High":records['High'][i],"Low":records['Low'][i],"Timestamp":records.index[i].strftime('%m/%d/%Y %X'),"Name":stocks[stock]}
+            output = {"high":records['High'][i],"low":records['Low'][i],"ts":records.index[i].strftime('%m/%d/%Y %X'),"name":stocks[stock]}
             
             # Convert the data into JSON
             as_jsonstr = json.dumps(output)
