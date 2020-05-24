@@ -20,14 +20,14 @@ In this portion, we will configure the Kinesis firehose delivery stream, and als
 ![Data Collector Lambda configuration](https://user-images.githubusercontent.com/6689256/82743702-03c48c80-9d3d-11ea-9398-ed24855d307b.PNG)
 
 * ```Initiating Athena services for querying```
-![Athena Services](https://user-images.githubusercontent.com/6689256/82743875-53a45300-9d3f-11ea-9183-2a81a3b12710.PNG)
+![Athena Services](https://user-images.githubusercontent.com/6689256/82762552-a3caf600-9dcf-11ea-8840-ede29a52905c.PNG)
 
 - [x] This module is completed
 
 
-## Part 2: Transformation, Processing, Analyzing
+## Part 2: Collection, Processing, Analyzing
 
-### A) Transformation
+### A) Collection
 #### 1. Lambda Function source code for collection:
 * ```data_collector.py```
 ``` 
@@ -63,7 +63,7 @@ def lambda_handler(event, context):
         
         # Cleaning the data and store them as a dict
         for i in range(len(records)):
-            output = {"High":records['High'][i],"Low":records['Low'][i],"Timestamp":records.index[i].strftime('%m/%d/%Y %X'),"Name":stocks[stock]}
+            output = {"high":records['High'][i],"low":records['Low'][i],"ts":records.index[i].strftime('%m/%d/%Y %X'),"name":stocks[stock]}
             
             # Convert the data into JSON
             as_jsonstr = json.dumps(output)
@@ -81,7 +81,7 @@ def lambda_handler(event, context):
     }
 ```
 
-#### 2. Lambda Function :
+#### 2. Lambda Function URL:
 * ```API endpoint```
 ``` 
 https://wb3lb97r3e.execute-api.us-east-2.amazonaws.com/default/finance-stream-collector
@@ -110,15 +110,51 @@ https://s3.console.aws.amazon.com/s3/buckets/finance-stream/?region=us-east-2&ta
 ```
 
 ### C) Analysis
-#### 1. Query to fetch the highest stocks by hour for each stock on 14th May, 2020:
-* ```data_collector.py```
+#### 1. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and maintaining recurrence of high stocks:
+* ```query.sql```
 ``` 
-SELECT upper(name) as Name, round(high,2) as High, timestamp as Timestamp, hour as Hour
-from(
-  select db.*,SUBSTRING(timestamp, 12, 2) as Hour, ROW_NUMBER() OVER(PARTITION BY name, SUBSTRING(timestamp, 12, 2) order by high) as rn
-  FROM "21" db
-  where timestamp between '05/14/2020 09:30:00' AND '05/14/2020 16:00:00'
-)db1 where rn=1 order by name, timestamp
+WITH CTE AS (
+  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour) AS rn FROM (
+    SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp FROM (
+      SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour FROM  "04" 
+      GROUP BY 1, 3
+      ORDER BY 1, 3
+      ) db1, "04" db2
+    WHERE db1.Name = db2.name AND db1.Hour = substring(ts,12,2) AND db1.high = db2.High
+    ORDER BY Name, Hour) db3)
+    SELECT Name, High, Hour, Timestamp,
+    Case
+    when rn=1 then (SELECT count(*) FROM CTE t1 WHERE t1.High = t2.High AND t1.Hour = t2.Hour)
+    else 0
+    end AS Recurrence
+    FROM CTE t2 ORDER BY Name, Hour
+```
+
+#### 2. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and picking only the first instance:
+* ```query.sql```
+```
+SELECT Name, High, Hour, Timestamp FROM (
+WITH CTE AS (
+  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour) AS rn FROM (
+    SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp FROM (
+      SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour FROM  "04" 
+      GROUP BY 1, 3
+      ORDER BY 1, 3
+      ) db1, "04" db2
+    WHERE db1.Name = db2.name AND db1.Hour = substring(ts,12,2) AND db1.high = db2.High
+    ORDER BY Name, Hour) db3)
+    SELECT Name, High, Hour, Timestamp,
+    Case
+    when rn=1 then (SELECT count(*) FROM CTE t1 WHERE t1.High = t2.High AND t1.Hour = t2.Hour)
+    else 0
+    end AS Recurrence
+    FROM CTE t2 ORDER BY Name, Hour)db4 WHERE Recurrence >= 1
+```
+
+#### 3. Additional Exercise: Visualizing the records in results.csv
+* ```Analysis.ipynb```
+```
+It includes some plots to see the trend of high stock prices by day for each hour, distribution of all high stocks per hour, and also how they appear in a group plot when compared with each other. 
 ```
 
 - [x] This module is completed
