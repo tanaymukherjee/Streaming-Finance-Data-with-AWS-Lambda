@@ -114,7 +114,7 @@ https://s3.console.aws.amazon.com/s3/buckets/finance-stream/?region=us-east-2&ta
 * ```query.sql```
 ``` 
 WITH CTE AS (
-  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour) AS rn FROM (
+  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour, Timestamp) AS rn FROM (
     SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp FROM (
       SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour FROM  "04" 
       GROUP BY 1, 3
@@ -127,7 +127,7 @@ WITH CTE AS (
     when rn=1 then (SELECT count(*) FROM CTE t1 WHERE t1.High = t2.High AND t1.Hour = t2.Hour)
     else 0
     end AS Recurrence
-    FROM CTE t2 ORDER BY Name, Hour
+    FROM CTE t2 ORDER BY Name, Hour, Timestamp
 ```
 
 #### 2. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and picking only the first instance:
@@ -135,7 +135,7 @@ WITH CTE AS (
 ```
 SELECT Name, High, Hour, Timestamp FROM (
 WITH CTE AS (
-  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour) AS rn FROM (
+  SELECT *, ROW_NUMBER() over (PARTITION BY High, Hour ORDER BY Name, Hour, Timestamp) AS rn FROM (
     SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp FROM (
       SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour FROM  "04" 
       GROUP BY 1, 3
@@ -148,7 +148,7 @@ WITH CTE AS (
     when rn=1 then (SELECT count(*) FROM CTE t1 WHERE t1.High = t2.High AND t1.Hour = t2.Hour)
     else 0
     end AS Recurrence
-    FROM CTE t2 ORDER BY Name, Hour)db4 WHERE Recurrence >= 1
+    FROM CTE t2 ORDER BY Name, Hour, Timestamp) db4 WHERE Recurrence >= 1
 ```
 
 #### 3. Additional Exercise: Visualizing the records in results.csv
