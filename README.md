@@ -20,7 +20,7 @@ In this portion, we will configure the Kinesis firehose delivery stream, and als
 ![Data Collector Lambda configuration](https://user-images.githubusercontent.com/6689256/82743702-03c48c80-9d3d-11ea-9398-ed24855d307b.PNG)
 
 * ```Initiating Athena services for querying```
-![Athena Services](https://user-images.githubusercontent.com/6689256/82762552-a3caf600-9dcf-11ea-8840-ede29a52905c.PNG)
+![Athena Services](https://user-images.githubusercontent.com/6689256/82781049-d522e080-9e26-11ea-9967-728778039c14.PNG)
 
 - [x] This module is completed
 
@@ -175,7 +175,7 @@ Memory: 500 GB
 
 * ```Tools Used:```
 ``` 
-Programming Language: Python (Version 3.7)
+Programming Language: Python (Version 3.8)
 Editor: Jupyter Notebook (Locally)
 Platform: Amazon Web Services (AWS)
 ```
