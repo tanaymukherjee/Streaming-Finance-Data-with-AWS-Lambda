@@ -25,7 +25,7 @@ In this portion, we will configure the Kinesis firehose delivery stream, and als
 - [x] This module is completed
 
 
-## Part 2: Collection, Processing, Analyzing
+## Part 2: Collecting, Transforming, Analyzing
 
 ### A) Collection
 #### 1. Lambda Function source code for collection:
@@ -87,9 +87,9 @@ def lambda_handler(event, context):
 https://wb3lb97r3e.execute-api.us-east-2.amazonaws.com/default/finance-stream-collector
 ```
 
-### B) Processing
+### B) Transforming
 #### 1. Lambda Function source code for transformation:
-* ```data_processor.py```
+* ```data_transformer.py```
 ```
 def lambda_handler(event, context):
     output_records = []
