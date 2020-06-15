@@ -110,7 +110,19 @@ https://s3.console.aws.amazon.com/s3/buckets/finance-stream/?region=us-east-2&ta
 ```
 
 ### C) Analysis
-#### 1. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and maintaining recurrence of high stocks:
+#### 1. Query to fetch the highest stocks by hour for each stock on 14th May, 2020:
+* ```query.sql```
+``` 
+SELECT upper(db1.Name) AS Name, round(db1.High,2) AS High, db1.Hour as Hour, ts AS Timestamp 
+FROM (
+  SELECT name AS Name, max(high) AS High, substring(ts,12,2) AS Hour
+  FROM  "04" GROUP BY 1, 3 ORDER BY 1, 3
+  )db1, "04" db2
+WHERE db1.Name = db2.name AND db1.Hour = substring(ts,12,2) AND db1.high = db2.High
+ORDER BY Name, Hour;
+```
+
+#### 2. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and maintaining recurrence of high stocks:
 * ```query.sql```
 ``` 
 WITH CTE AS (
@@ -130,7 +142,7 @@ WITH CTE AS (
     FROM CTE t2 ORDER BY Name, Hour, Timestamp
 ```
 
-#### 2. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and picking only the first instance:
+#### 3. Query to fetch the highest stocks by hour for each stock on 14th May, 2020 and picking only the first instance in case of a tie:
 * ```query.sql```
 ```
 SELECT Name, High, Hour, Timestamp FROM (
@@ -151,7 +163,7 @@ WITH CTE AS (
     FROM CTE t2 ORDER BY Name, Hour, Timestamp) db4 WHERE Recurrence >= 1
 ```
 
-#### 3. Additional Exercise: Visualizing the records in results.csv
+#### 4. Additional Exercise: Visualizing the records in results.csv
 * ```Analysis.ipynb```
 ```
 It includes some plots to see the trend of high stock prices by day for each hour, distribution of all high stocks per hour, and also how they appear in a group plot when compared with each other. 
